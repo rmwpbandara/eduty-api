@@ -1,6 +1,8 @@
 import { Controller, Get, Request, UseGuards, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -8,6 +10,31 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ 
+    summary: 'Get current user profile', 
+    description: 'Returns the profile information of the authenticated user. Requires a valid JWT token in the Authorization header.' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns current user information',
+    schema: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174000' },
+            email: { type: 'string', example: 'user@example.com' },
+            email_confirmed_at: { type: 'string', nullable: true, example: '2024-01-01T00:00:00Z' },
+            created_at: { type: 'string', example: '2024-01-01T00:00:00Z' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   async getProfile(@Request() req) {
     try {
       const authHeader = req.headers.authorization;
