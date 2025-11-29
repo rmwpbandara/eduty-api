@@ -41,19 +41,19 @@ async function bootstrap() {
     // Compression
     app.use(compression());
 
-    // Add redirect from /api to /api/v1 for Railway compatibility (before global prefix)
+    // API Versioning
+    app.setGlobalPrefix('api');
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+    });
+
+    // Add redirect from /api to /api/v1 for Railway compatibility
     app.use('/api', (req, res, next) => {
       if (req.path === '' || req.path === '/') {
         return res.redirect(301, '/api/v1/');
       }
       next();
-    });
-
-    // API Versioning
-    app.setGlobalPrefix('api/v1');
-    app.enableVersioning({
-      type: VersioningType.URI,
-      defaultVersion: '1',
     });
 
     // Enable CORS for frontend
@@ -134,7 +134,7 @@ async function bootstrap() {
           methodKey,
       });
 
-      SwaggerModule.setup('docs', app, document, {
+      SwaggerModule.setup('api/v1/docs', app, document, {
         swaggerOptions: {
           persistAuthorization: true,
           tagsSorter: 'alpha',
@@ -159,8 +159,12 @@ async function bootstrap() {
     logger.log(startupMessage);
     console.log(startupMessage); // Always log to console for Railway
 
-    logger.log(`📚 Swagger documentation: http://0.0.0.0:${port}/api/v1/docs`);
+    if (process.env.NODE_ENV !== 'production') {
+      logger.log(`📚 Swagger documentation: http://0.0.0.0:${port}/api/v1/docs`);
+      console.log(`📚 Swagger documentation: http://0.0.0.0:${port}/api/v1/docs`);
+    }
     logger.log(`🏥 Health check: http://0.0.0.0:${port}/api/v1/health`);
+    logger.log(`🔗 API root: http://0.0.0.0:${port}/api/v1/`);
     logger.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.log(`🔌 Listening on: 0.0.0.0:${port}`);
 
