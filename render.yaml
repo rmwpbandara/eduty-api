@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: eduty-api
+    env: node
+    buildCommand: npm run build
+    startCommand: npm run start:prod
+    rootDir: api
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+
