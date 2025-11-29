@@ -47,7 +47,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
           // Handle both postgresql:// and postgres:// protocols
           const urlString = databaseUrl.replace(/^postgresql:/, 'postgres:');
           const url = new URL(urlString);
-          
+
           const config = {
             type: 'postgres' as const,
             host: url.hostname,
@@ -70,8 +70,10 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
             retryDelay: 3000,
             autoLoadEntities: true,
           };
-          
-          console.log(`Database configured for: ${url.hostname}:${config.port}/${config.database}`);
+
+          console.log(
+            `Database configured for: ${url.hostname}:${config.port}/${config.database}`,
+          );
           return config;
         } catch (error) {
           console.error('Failed to parse DATABASE_URL:', error);
