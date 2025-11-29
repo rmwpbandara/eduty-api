@@ -52,4 +52,3 @@ export class LeaveRequest {
   @JoinColumn({ name: 'workspace_id' })
   workspace: Workspace;
 }
-

@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsUUID, IsDateString, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsDateString,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateLeaveRequestDto {
@@ -39,4 +45,3 @@ export class CreateLeaveRequestDto {
   @IsOptional()
   reason?: string;
 }
-

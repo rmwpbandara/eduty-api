@@ -5,7 +5,6 @@ import {
   IsString,
   validateSync,
   IsOptional,
-  IsUrl,
 } from 'class-validator';
 
 enum Environment {
@@ -57,4 +56,3 @@ export function validate(config: Record<string, unknown>) {
 
   return validatedConfig;
 }
-

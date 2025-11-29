@@ -24,7 +24,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
@@ -64,11 +64,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     // In production, don't expose internal error details
-    if (status === HttpStatus.INTERNAL_SERVER_ERROR && process.env.NODE_ENV === 'production') {
+    if (
+      status === HttpStatus.INTERNAL_SERVER_ERROR &&
+      process.env.NODE_ENV === 'production'
+    ) {
       errorResponse.message = 'Internal server error';
     }
 
     response.status(status).json(errorResponse);
   }
 }
-

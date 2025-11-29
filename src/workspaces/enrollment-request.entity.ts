@@ -43,4 +43,3 @@ export class EnrollmentRequest {
   @JoinColumn({ name: 'workspace_id' })
   workspace: Workspace;
 }
-

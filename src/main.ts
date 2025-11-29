@@ -7,18 +7,26 @@ import * as compression from 'compression';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    bufferLogs: true,
-  });
+  try {
+    const app = await NestFactory.create(AppModule, {
+      bufferLogs: true,
+      logger: ['error', 'warn', 'log'], // Fallback logger
+    });
 
-  // Use Winston logger
-  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+    // Use Winston logger
+    try {
+      app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+    } catch (error) {
+      console.warn('Winston logger initialization failed, using default logger');
+    }
 
   // Security Headers
-  app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production',
-    crossOriginEmbedderPolicy: false,
-  }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: process.env.NODE_ENV === 'production',
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // Compression
   app.use(compression());
@@ -32,8 +40,8 @@ async function bootstrap() {
 
   // Enable CORS for frontend
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const allowedOrigins = frontendUrl.split(',').map(url => url.trim());
-  
+  const allowedOrigins = frontendUrl.split(',').map((url) => url.trim());
+
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
@@ -41,13 +49,13 @@ async function bootstrap() {
         callback(null, true);
         return;
       }
-      
+
       // In development, allow all origins
       if (process.env.NODE_ENV !== 'production') {
         callback(null, true);
         return;
       }
-      
+
       // Check if origin is in allowed list
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -102,12 +110,13 @@ async function bootstrap() {
       .addTag('Workspaces', 'Workspace management endpoints')
       .addTag('Health', 'Health check endpoints')
       .build();
-    
+
     const document = SwaggerModule.createDocument(app, config, {
-      operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+      operationIdFactory: (controllerKey: string, methodKey: string) =>
+        methodKey,
     });
-    
-    SwaggerModule.setup('api/docs', app, document, {
+
+    SwaggerModule.setup('docs', app, document, {
       swaggerOptions: {
         persistAuthorization: true,
         tagsSorter: 'alpha',
@@ -117,15 +126,22 @@ async function bootstrap() {
     });
   }
 
-  const port = process.env.PORT || 3001;
-  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+    const port = process.env.PORT || 3001;
+    const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
 
-  await app.listen(port);
-  
-  logger.log(`🚀 Application is running on: http://localhost:${port}`);
-  logger.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
-  logger.log(`🏥 Health check: http://localhost:${port}/api/v1/health`);
-  logger.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    await app.listen(port, '0.0.0.0'); // Listen on all interfaces for Railway
+
+    logger.log(`🚀 Application is running on: http://0.0.0.0:${port}`);
+    logger.log(`📚 Swagger documentation: http://0.0.0.0:${port}/api/v1/docs`);
+    logger.log(`🏥 Health check: http://0.0.0.0:${port}/api/v1/health`);
+    logger.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.log(`🔌 Listening on: 0.0.0.0:${port}`);
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    process.exit(1);
+  }
 }
-bootstrap();
-
+bootstrap().catch((error) => {
+  console.error('Bootstrap failed:', error);
+  process.exit(1);
+});

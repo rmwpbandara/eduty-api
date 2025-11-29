@@ -12,4 +12,3 @@ export class EnrollWorkspaceDto {
   @IsUUID()
   workspaceId: string;
 }
-

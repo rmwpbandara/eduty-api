@@ -19,9 +19,7 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Service is healthy' })
   @HealthCheck()
   check() {
-    return this.health.check([
-      () => this.db.pingCheck('database'),
-    ]);
+    return this.health.check([() => this.db.pingCheck('database')]);
   }
 
   @Get('liveness')
@@ -39,9 +37,6 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Service is ready' })
   @HealthCheck()
   readiness() {
-    return this.health.check([
-      () => this.db.pingCheck('database'),
-    ]);
+    return this.health.check([() => this.db.pingCheck('database')]);
   }
 }
-

@@ -10,7 +10,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { Workspace } from './workspace.entity';
 import { Enrollment } from './enrollment.entity';
-import { EnrollmentRequest, EnrollmentRequestStatus } from './enrollment-request.entity';
+import {
+  EnrollmentRequest,
+  EnrollmentRequestStatus,
+} from './enrollment-request.entity';
 import { UserFavorite } from './user-favorite.entity';
 import { Invitation, InvitationStatus } from './invitation.entity';
 import { Roster, RosterStatus } from './roster.entity';
@@ -58,7 +61,9 @@ export class WorkspacesService {
     });
 
     const savedWorkspace = await this.workspaceRepository.save(workspace);
-    this.logger.log(`Workspace created: ${savedWorkspace.id} by user ${ownerId}`);
+    this.logger.log(
+      `Workspace created: ${savedWorkspace.id} by user ${ownerId}`,
+    );
     return savedWorkspace;
   }
 
@@ -151,10 +156,11 @@ export class WorkspacesService {
 
   async searchWorkspaces(searchDto: SearchWorkspaceDto): Promise<Workspace[]> {
     const { query } = searchDto;
-    
+
     // Check if query is a UUID (workspace ID)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     if (uuidRegex.test(query)) {
       // Search by ID
       const workspace = await this.workspaceRepository.findOne({
@@ -210,7 +216,9 @@ export class WorkspacesService {
     });
 
     if (existingRequest) {
-      throw new ConflictException('You already have a pending enrollment request for this workspace');
+      throw new ConflictException(
+        'You already have a pending enrollment request for this workspace',
+      );
     }
 
     // Special case: If the user is the workspace owner, auto-approve the enrollment
@@ -238,7 +246,7 @@ export class WorkspacesService {
 
       // Auto-set as favorite if this is the user's first enrollment
       await this.autoSetFirstFavorite(userId);
-      
+
       // Return the enrollment (not the request) for consistency
       return savedEnrollment as any;
     }
@@ -257,7 +265,10 @@ export class WorkspacesService {
     return savedRequest;
   }
 
-  async getPendingRequests(workspaceId: string, requestingUserId: string): Promise<any[]> {
+  async getPendingRequests(
+    workspaceId: string,
+    requestingUserId: string,
+  ): Promise<any[]> {
     // Verify workspace exists and user is the owner
     const workspace = await this.workspaceRepository.findOne({
       where: { id: workspaceId },
@@ -441,9 +452,7 @@ export class WorkspacesService {
     });
 
     if (!enrollment) {
-      throw new NotFoundException(
-        'You are not enrolled in this workspace',
-      );
+      throw new NotFoundException('You are not enrolled in this workspace');
     }
 
     // Remove the enrollment record
@@ -465,9 +474,7 @@ export class WorkspacesService {
       );
     }
 
-    this.logger.log(
-      `User ${userId} unenrolled from workspace ${workspaceId}`,
-    );
+    this.logger.log(`User ${userId} unenrolled from workspace ${workspaceId}`);
 
     // Shift favorite to next enrollment if needed
     await this.shiftFavoriteToNext(userId, workspaceId);
@@ -488,9 +495,7 @@ export class WorkspacesService {
     }
 
     if (workspace.ownerId !== ownerId) {
-      throw new ForbiddenException(
-        'Only the workspace owner can remove users',
-      );
+      throw new ForbiddenException('Only the workspace owner can remove users');
     }
 
     // Owner cannot remove themselves
@@ -509,9 +514,7 @@ export class WorkspacesService {
     });
 
     if (!enrollment) {
-      throw new NotFoundException(
-        'User is not enrolled in this workspace',
-      );
+      throw new NotFoundException('User is not enrolled in this workspace');
     }
 
     // Remove the enrollment record
@@ -540,7 +543,12 @@ export class WorkspacesService {
   async getWorkspaceWithEnrollmentStatus(
     workspaceId: string,
     userId: string,
-  ): Promise<{ workspace: Workspace; isEnrolled: boolean; isOwner: boolean; requestStatus?: string }> {
+  ): Promise<{
+    workspace: Workspace;
+    isEnrolled: boolean;
+    isOwner: boolean;
+    requestStatus?: string;
+  }> {
     const workspace = await this.workspaceRepository.findOne({
       where: { id: workspaceId },
     });
@@ -598,12 +606,12 @@ export class WorkspacesService {
   async getUserPendingRequests(userId: string): Promise<any[]> {
     try {
       this.logger.log(`[getUserPendingRequests] Starting for user ${userId}`);
-      
+
       if (!userId || typeof userId !== 'string') {
         this.logger.error(`[getUserPendingRequests] Invalid userId: ${userId}`);
         return [];
       }
-      
+
       // Use the exact same pattern as requestEnrollment's findOne check
       const requests = await this.enrollmentRequestRepository.find({
         where: {
@@ -614,13 +622,15 @@ export class WorkspacesService {
           createdAt: 'DESC',
         },
       });
-      
-      this.logger.log(`[getUserPendingRequests] Found ${requests?.length || 0} requests`);
-      
+
+      this.logger.log(
+        `[getUserPendingRequests] Found ${requests?.length || 0} requests`,
+      );
+
       if (!requests || requests.length === 0) {
         return [];
       }
-      
+
       // Load workspaces and map results
       const result: any[] = [];
       for (const request of requests) {
@@ -634,24 +644,34 @@ export class WorkspacesService {
               workspaceName = workspace.name;
             }
           }
-          
+
           result.push({
             id: request.id,
             workspaceId: request.workspaceId,
             workspaceName: workspaceName,
-            requestedAt: request.createdAt ? request.createdAt.toISOString() : new Date().toISOString(),
+            requestedAt: request.createdAt
+              ? request.createdAt.toISOString()
+              : new Date().toISOString(),
             status: request.status || EnrollmentRequestStatus.PENDING,
           });
         } catch (itemError: any) {
-          this.logger.warn(`[getUserPendingRequests] Error processing request ${request.id}:`, itemError?.message);
+          this.logger.warn(
+            `[getUserPendingRequests] Error processing request ${request.id}:`,
+            itemError?.message,
+          );
           // Skip this item but continue with others
         }
       }
-      
-      this.logger.log(`[getUserPendingRequests] Returning ${result.length} requests`);
+
+      this.logger.log(
+        `[getUserPendingRequests] Returning ${result.length} requests`,
+      );
       return result;
     } catch (error: any) {
-      this.logger.error(`[getUserPendingRequests] Error:`, error?.message || error);
+      this.logger.error(
+        `[getUserPendingRequests] Error:`,
+        error?.message || error,
+      );
       if (error instanceof Error) {
         this.logger.error('[getUserPendingRequests] Stack:', error.stack);
       }
@@ -659,7 +679,10 @@ export class WorkspacesService {
     }
   }
 
-  async getEnrolledUsers(workspaceId: string, requestingUserId: string): Promise<any[]> {
+  async getEnrolledUsers(
+    workspaceId: string,
+    requestingUserId: string,
+  ): Promise<any[]> {
     // Verify workspace exists and user has access (owner or enrolled)
     const workspace = await this.workspaceRepository.findOne({
       where: { id: workspaceId },
@@ -820,7 +843,10 @@ export class WorkspacesService {
     }
   }
 
-  async shiftFavoriteToNext(userId: string, removedWorkspaceId: string): Promise<void> {
+  async shiftFavoriteToNext(
+    userId: string,
+    removedWorkspaceId: string,
+  ): Promise<void> {
     // Check if the removed workspace was the favorite
     const favorite = await this.userFavoriteRepository.findOne({
       where: { userId },
@@ -844,7 +870,9 @@ export class WorkspacesService {
       } else {
         // No more enrollments, remove favorite
         await this.userFavoriteRepository.remove(favorite);
-        this.logger.log(`Removed favorite for user ${userId} (no enrollments left)`);
+        this.logger.log(
+          `Removed favorite for user ${userId} (no enrollments left)`,
+        );
       }
     }
   }
@@ -890,7 +918,8 @@ export class WorkspacesService {
 
     // Check if user is already enrolled
     try {
-      const inviteeUser = await this.authService.getUserByEmail(normalizedEmail);
+      const inviteeUser =
+        await this.authService.getUserByEmail(normalizedEmail);
       if (inviteeUser) {
         const existingEnrollment = await this.enrollmentRepository.findOne({
           where: {
@@ -910,7 +939,9 @@ export class WorkspacesService {
         throw error;
       }
       // If user doesn't exist yet, that's fine - they can accept after signing up
-      this.logger.log(`Inviting user who may not be registered yet: ${normalizedEmail}`);
+      this.logger.log(
+        `Inviting user who may not be registered yet: ${normalizedEmail}`,
+      );
     }
 
     // Check if there's already a pending invitation
@@ -999,9 +1030,7 @@ export class WorkspacesService {
             inviterEmail = inviterUser.email;
           }
         } catch (error) {
-          this.logger.warn(
-            `Could not fetch inviter details: ${error.message}`,
-          );
+          this.logger.warn(`Could not fetch inviter details: ${error.message}`);
         }
 
         return {
@@ -1055,9 +1084,7 @@ export class WorkspacesService {
     });
 
     if (existingEnrollment) {
-      throw new ConflictException(
-        'You are already enrolled in this workspace',
-      );
+      throw new ConflictException('You are already enrolled in this workspace');
     }
 
     // Create enrollment
@@ -1122,10 +1149,7 @@ export class WorkspacesService {
   /**
    * Cancel an invitation (owner only)
    */
-  async cancelInvitation(
-    invitationId: string,
-    ownerId: string,
-  ): Promise<void> {
+  async cancelInvitation(invitationId: string, ownerId: string): Promise<void> {
     const invitation = await this.invitationRepository.findOne({
       where: { id: invitationId },
       relations: ['workspace'],
@@ -1146,9 +1170,7 @@ export class WorkspacesService {
     }
 
     await this.invitationRepository.remove(invitation);
-    this.logger.log(
-      `Invitation ${invitationId} cancelled by owner ${ownerId}`,
-    );
+    this.logger.log(`Invitation ${invitationId} cancelled by owner ${ownerId}`);
   }
 
   // ============================================================================
@@ -1243,7 +1265,9 @@ export class WorkspacesService {
 
     // Verify user is the workspace owner
     if (roster.workspace.ownerId !== ownerId) {
-      throw new ForbiddenException('Only the workspace owner can publish rosters');
+      throw new ForbiddenException(
+        'Only the workspace owner can publish rosters',
+      );
     }
 
     // Update roster status
@@ -1253,9 +1277,7 @@ export class WorkspacesService {
 
     const updatedRoster = await this.rosterRepository.save(roster);
 
-    this.logger.log(
-      `Roster ${rosterId} published by owner ${ownerId}`,
-    );
+    this.logger.log(`Roster ${rosterId} published by owner ${ownerId}`);
 
     return updatedRoster;
   }
@@ -1275,7 +1297,9 @@ export class WorkspacesService {
 
     // Verify user is the workspace owner
     if (roster.workspace.ownerId !== ownerId) {
-      throw new ForbiddenException('Only the workspace owner can unpublish rosters');
+      throw new ForbiddenException(
+        'Only the workspace owner can unpublish rosters',
+      );
     }
 
     // Update roster status
@@ -1285,9 +1309,7 @@ export class WorkspacesService {
 
     const updatedRoster = await this.rosterRepository.save(roster);
 
-    this.logger.log(
-      `Roster ${rosterId} unpublished by owner ${ownerId}`,
-    );
+    this.logger.log(`Roster ${rosterId} unpublished by owner ${ownerId}`);
 
     return updatedRoster;
   }
@@ -1444,15 +1466,15 @@ export class WorkspacesService {
 
     // Verify user is the workspace owner
     if (roster.workspace.ownerId !== ownerId) {
-      throw new ForbiddenException('Only the workspace owner can delete rosters');
+      throw new ForbiddenException(
+        'Only the workspace owner can delete rosters',
+      );
     }
 
     // Delete roster (assignments will be cascade deleted)
     await this.rosterRepository.remove(roster);
 
-    this.logger.log(
-      `Roster ${rosterId} deleted by owner ${ownerId}`,
-    );
+    this.logger.log(`Roster ${rosterId} deleted by owner ${ownerId}`);
   }
 
   // ============================================================================
@@ -1496,7 +1518,9 @@ export class WorkspacesService {
     const end = new Date(endDate);
 
     if (end < start) {
-      throw new BadRequestException('End date must be after or equal to start date');
+      throw new BadRequestException(
+        'End date must be after or equal to start date',
+      );
     }
 
     // Check for overlapping pending leave requests
@@ -1504,7 +1528,9 @@ export class WorkspacesService {
       .createQueryBuilder('leave')
       .where('leave.workspace_id = :workspaceId', { workspaceId })
       .andWhere('leave.user_id = :userId', { userId })
-      .andWhere('leave.status = :status', { status: LeaveRequestStatus.PENDING })
+      .andWhere('leave.status = :status', {
+        status: LeaveRequestStatus.PENDING,
+      })
       .andWhere(
         '(leave.start_date <= :endDate AND leave.end_date >= :startDate)',
         { startDate, endDate },
@@ -1638,9 +1664,7 @@ export class WorkspacesService {
     request.status = LeaveRequestStatus.APPROVED;
     const updatedRequest = await this.leaveRequestRepository.save(request);
 
-    this.logger.log(
-      `Leave request ${requestId} approved by owner ${ownerId}`,
-    );
+    this.logger.log(`Leave request ${requestId} approved by owner ${ownerId}`);
 
     return updatedRequest;
   }
@@ -1676,9 +1700,7 @@ export class WorkspacesService {
     request.status = LeaveRequestStatus.REJECTED;
     const updatedRequest = await this.leaveRequestRepository.save(request);
 
-    this.logger.log(
-      `Leave request ${requestId} rejected by owner ${ownerId}`,
-    );
+    this.logger.log(`Leave request ${requestId} rejected by owner ${ownerId}`);
 
     return updatedRequest;
   }
@@ -1686,10 +1708,7 @@ export class WorkspacesService {
   /**
    * Cancel own leave request (users only)
    */
-  async cancelLeaveRequest(
-    requestId: string,
-    userId: string,
-  ): Promise<void> {
+  async cancelLeaveRequest(requestId: string, userId: string): Promise<void> {
     const request = await this.leaveRequestRepository.findOne({
       where: { id: requestId },
     });
@@ -1712,9 +1731,6 @@ export class WorkspacesService {
 
     await this.leaveRequestRepository.remove(request);
 
-    this.logger.log(
-      `Leave request ${requestId} cancelled by user ${userId}`,
-    );
+    this.logger.log(`Leave request ${requestId} cancelled by user ${userId}`);
   }
 }
-

@@ -1,5 +1,17 @@
-import { Controller, Get, Request, UseGuards, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Request,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
 @ApiTags('Authentication')
@@ -11,12 +23,13 @@ export class AuthController {
 
   @Get('me')
   @ApiBearerAuth()
-  @ApiOperation({ 
-    summary: 'Get current user profile', 
-    description: 'Returns the profile information of the authenticated user. Requires a valid JWT token in the Authorization header.' 
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description:
+      'Returns the profile information of the authenticated user. Requires a valid JWT token in the Authorization header.',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Returns current user information',
     schema: {
       type: 'object',
@@ -24,59 +37,74 @@ export class AuthController {
         user: {
           type: 'object',
           properties: {
-            id: { type: 'string', example: '123e4567-e89b-12d3-a456-426614174000' },
+            id: {
+              type: 'string',
+              example: '123e4567-e89b-12d3-a456-426614174000',
+            },
             email: { type: 'string', example: 'user@example.com' },
-            email_confirmed_at: { type: 'string', nullable: true, example: '2024-01-01T00:00:00Z' },
+            email_confirmed_at: {
+              type: 'string',
+              nullable: true,
+              example: '2024-01-01T00:00:00Z',
+            },
             created_at: { type: 'string', example: '2024-01-01T00:00:00Z' },
           },
         },
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getProfile(@Request() req) {
     try {
       const authHeader = req.headers.authorization;
-      
+
       if (!authHeader) {
         throw new HttpException(
           { error: 'No authorization header provided' },
-          HttpStatus.UNAUTHORIZED
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
       if (!authHeader.startsWith('Bearer ')) {
         throw new HttpException(
-          { error: 'Invalid authorization header format. Expected: Bearer <token>' },
-          HttpStatus.UNAUTHORIZED
+          {
+            error:
+              'Invalid authorization header format. Expected: Bearer <token>',
+          },
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
       const token = authHeader.replace('Bearer ', '').trim();
-      
+
       if (!token || token.length < 10) {
         throw new HttpException(
           { error: 'Invalid token format' },
-          HttpStatus.UNAUTHORIZED
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
       const user = await this.authService.verifyToken(token);
-      
+
       if (!user) {
         throw new HttpException(
           { error: 'Invalid or expired token' },
-          HttpStatus.UNAUTHORIZED
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
       // Verify user has required fields
       if (!user.id || !user.email) {
-        this.logger.warn('User data missing required fields', { userId: user.id });
+        this.logger.warn('User data missing required fields', {
+          userId: user.id,
+        });
         throw new HttpException(
           { error: 'Invalid user data' },
-          HttpStatus.INTERNAL_SERVER_ERROR
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
 
@@ -97,9 +125,8 @@ export class AuthController {
       this.logger.error('Error in getProfile', error);
       throw new HttpException(
         { error: 'Internal server error' },
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 }
-

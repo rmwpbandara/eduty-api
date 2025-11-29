@@ -6,4 +6,3 @@ export class UpdateLeaveRequestStatusDto {
   @IsNotEmpty()
   status: LeaveRequestStatus;
 }
-

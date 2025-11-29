@@ -10,7 +10,14 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { WorkspacesService } from './workspaces.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
@@ -29,7 +36,10 @@ export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new workspace', description: 'Creates a new workspace owned by the authenticated user' })
+  @ApiOperation({
+    summary: 'Create a new workspace',
+    description: 'Creates a new workspace owned by the authenticated user',
+  })
   @ApiResponse({ status: 201, description: 'Workspace created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Body() createWorkspaceDto: CreateWorkspaceDto, @Request() req) {
@@ -37,13 +47,25 @@ export class WorkspacesController {
   }
 
   @Get('search')
-  @ApiOperation({ summary: 'Search workspaces', description: 'Search for workspaces by name or ID. Returns workspaces with enrollment status for the current user' })
-  @ApiQuery({ name: 'query', description: 'Search query (workspace name or ID)', example: 'Emergency' })
-  @ApiResponse({ status: 200, description: 'List of workspaces matching the search query with enrollment status' })
+  @ApiOperation({
+    summary: 'Search workspaces',
+    description:
+      'Search for workspaces by name or ID. Returns workspaces with enrollment status for the current user',
+  })
+  @ApiQuery({
+    name: 'query',
+    description: 'Search query (workspace name or ID)',
+    example: 'Emergency',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'List of workspaces matching the search query with enrollment status',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async search(@Query() searchDto: SearchWorkspaceDto, @Request() req) {
     const workspaces = await this.workspacesService.searchWorkspaces(searchDto);
-    
+
     // Add enrollment status for each workspace
     const workspacesWithStatus = await Promise.all(
       workspaces.map(async (workspace) => {
@@ -51,11 +73,12 @@ export class WorkspacesController {
           workspace.id,
           req.user.id,
         );
-        const enrollmentRequest = await this.workspacesService.checkEnrollmentRequest(
-          workspace.id,
-          req.user.id,
-        );
-        
+        const enrollmentRequest =
+          await this.workspacesService.checkEnrollmentRequest(
+            workspace.id,
+            req.user.id,
+          );
+
         return {
           ...workspace,
           isEnrolled: !!enrollment,
@@ -63,12 +86,15 @@ export class WorkspacesController {
         };
       }),
     );
-    
+
     return workspacesWithStatus;
   }
 
   @Get('enrolled')
-  @ApiOperation({ summary: 'Get enrolled workspaces', description: 'Returns all workspaces the current user is enrolled in' })
+  @ApiOperation({
+    summary: 'Get enrolled workspaces',
+    description: 'Returns all workspaces the current user is enrolled in',
+  })
   @ApiResponse({ status: 200, description: 'List of enrolled workspaces' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getEnrolled(@Request() req) {
@@ -76,9 +102,19 @@ export class WorkspacesController {
   }
 
   @Post('favorite/:id')
-  @ApiOperation({ summary: 'Set favorite workspace', description: 'Marks a workspace as favorite for the current user' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 201, description: 'Workspace set as favorite successfully' })
+  @ApiOperation({
+    summary: 'Set favorite workspace',
+    description: 'Marks a workspace as favorite for the current user',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Workspace set as favorite successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Workspace not found' })
   setFavorite(@Param('id') id: string, @Request() req) {
@@ -86,7 +122,10 @@ export class WorkspacesController {
   }
 
   @Get('favorite')
-  @ApiOperation({ summary: 'Get favorite workspace', description: 'Returns the current user\'s favorite workspace' })
+  @ApiOperation({
+    summary: 'Get favorite workspace',
+    description: "Returns the current user's favorite workspace",
+  })
   @ApiResponse({ status: 200, description: 'Favorite workspace details' })
   @ApiResponse({ status: 404, description: 'No favorite workspace found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -95,8 +134,14 @@ export class WorkspacesController {
   }
 
   @Delete('favorite')
-  @ApiOperation({ summary: 'Remove favorite workspace', description: 'Removes the favorite workspace for the current user' })
-  @ApiResponse({ status: 200, description: 'Favorite workspace removed successfully' })
+  @ApiOperation({
+    summary: 'Remove favorite workspace',
+    description: 'Removes the favorite workspace for the current user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Favorite workspace removed successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeFavorite(@Request() req) {
     await this.workspacesService.removeFavoriteWorkspace(req.user.id);
@@ -104,8 +149,15 @@ export class WorkspacesController {
   }
 
   @Get('my-requests')
-  @ApiOperation({ summary: 'Get my pending enrollment requests', description: 'Returns all pending enrollment requests made by the current user' })
-  @ApiResponse({ status: 200, description: 'List of pending enrollment requests' })
+  @ApiOperation({
+    summary: 'Get my pending enrollment requests',
+    description:
+      'Returns all pending enrollment requests made by the current user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of pending enrollment requests',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMyPendingRequests(@Request() req) {
     try {
@@ -113,35 +165,56 @@ export class WorkspacesController {
         console.error('[Controller] No user or user.id in request');
         return [];
       }
-      
-      console.log(`[Controller] Getting pending requests for user: ${req.user.id}`);
-      
+
+      console.log(
+        `[Controller] Getting pending requests for user: ${req.user.id}`,
+      );
+
       let requests: any[] = [];
       try {
-        requests = await this.workspacesService.getUserPendingRequests(req.user.id);
-        console.log(`[Controller] Service returned ${requests?.length || 0} requests`);
+        requests = await this.workspacesService.getUserPendingRequests(
+          req.user.id,
+        );
+        console.log(
+          `[Controller] Service returned ${requests?.length || 0} requests`,
+        );
       } catch (serviceError: any) {
         console.error('[Controller] Service error:', serviceError);
-        console.error('[Controller] Service error message:', serviceError?.message);
+        console.error(
+          '[Controller] Service error message:',
+          serviceError?.message,
+        );
         console.error('[Controller] Service error name:', serviceError?.name);
         if (serviceError instanceof Error) {
-          console.error('[Controller] Service error stack:', serviceError.stack);
+          console.error(
+            '[Controller] Service error stack:',
+            serviceError.stack,
+          );
         }
         // Return empty array on service error
         return [];
       }
-      
+
       // Ensure we always return an array
       if (!Array.isArray(requests)) {
-        console.warn('[Controller] Service returned non-array:', typeof requests, requests);
+        console.warn(
+          '[Controller] Service returned non-array:',
+          typeof requests,
+          requests,
+        );
         return [];
       }
-      
-      console.log(`[Controller] Successfully returning ${requests.length} requests`);
+
+      console.log(
+        `[Controller] Successfully returning ${requests.length} requests`,
+      );
       return requests;
     } catch (error: any) {
       // Log error but return empty array to prevent frontend crash
-      console.error('[Controller] Unexpected error in getMyPendingRequests:', error);
+      console.error(
+        '[Controller] Unexpected error in getMyPendingRequests:',
+        error,
+      );
       console.error('[Controller] Error type:', typeof error);
       console.error('[Controller] Error message:', error?.message);
       if (error instanceof Error) {
@@ -152,9 +225,20 @@ export class WorkspacesController {
   }
 
   @Get('details/:id')
-  @ApiOperation({ summary: 'Get workspace details with enrollment status', description: 'Returns workspace details including enrollment status for the current user' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Workspace details with enrollment status' })
+  @ApiOperation({
+    summary: 'Get workspace details with enrollment status',
+    description:
+      'Returns workspace details including enrollment status for the current user',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Workspace details with enrollment status',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Workspace not found' })
   getWorkspaceDetails(@Param('id') id: string, @Request() req) {
@@ -165,7 +249,10 @@ export class WorkspacesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all workspaces owned by user', description: 'Returns all workspaces owned by the authenticated user' })
+  @ApiOperation({
+    summary: 'Get all workspaces owned by user',
+    description: 'Returns all workspaces owned by the authenticated user',
+  })
   @ApiResponse({ status: 200, description: 'List of owned workspaces' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll(@Request() req) {
@@ -173,8 +260,16 @@ export class WorkspacesController {
   }
 
   @Get(':id/request-status')
-  @ApiOperation({ summary: 'Get enrollment request status', description: 'Returns the enrollment request status for the current user in the specified workspace' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Get enrollment request status',
+    description:
+      'Returns the enrollment request status for the current user in the specified workspace',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Enrollment request status' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Workspace not found' })
@@ -183,9 +278,20 @@ export class WorkspacesController {
   }
 
   @Get(':id/requests')
-  @ApiOperation({ summary: 'Get pending enrollment requests', description: 'Returns all pending enrollment requests for a workspace (workspace owner only)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'List of pending enrollment requests' })
+  @ApiOperation({
+    summary: 'Get pending enrollment requests',
+    description:
+      'Returns all pending enrollment requests for a workspace (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of pending enrollment requests',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
   getPendingRequests(@Param('id') id: string, @Request() req) {
@@ -193,8 +299,16 @@ export class WorkspacesController {
   }
 
   @Get(':id/users')
-  @ApiOperation({ summary: 'Get enrolled users', description: 'Returns all users enrolled in the workspace (workspace owner only)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Get enrolled users',
+    description:
+      'Returns all users enrolled in the workspace (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'List of enrolled users' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -203,9 +317,20 @@ export class WorkspacesController {
   }
 
   @Delete(':id/users/:userId')
-  @ApiOperation({ summary: 'Remove user from workspace', description: 'Removes a user from the workspace (workspace owner only)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiParam({ name: 'userId', description: 'User UUID to remove', example: '123e4567-e89b-12d3-a456-426614174001' })
+  @ApiOperation({
+    summary: 'Remove user from workspace',
+    description: 'Removes a user from the workspace (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User UUID to remove',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
   @ApiResponse({ status: 200, description: 'User removed successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -224,19 +349,36 @@ export class WorkspacesController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get workspace by ID', description: 'Returns workspace details by ID (must be owner or enrolled)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Get workspace by ID',
+    description: 'Returns workspace details by ID (must be owner or enrolled)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Workspace details' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Not owner or enrolled' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Not owner or enrolled',
+  })
   @ApiResponse({ status: 404, description: 'Workspace not found' })
   findOne(@Param('id') id: string, @Request() req) {
     return this.workspacesService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update workspace', description: 'Updates workspace details (workspace owner only)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Update workspace',
+    description: 'Updates workspace details (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Workspace updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -250,9 +392,18 @@ export class WorkspacesController {
   }
 
   @Post('enroll')
-  @ApiOperation({ summary: 'Request workspace enrollment', description: 'Creates an enrollment request for a workspace' })
-  @ApiResponse({ status: 201, description: 'Enrollment request created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request - Already enrolled or request exists' })
+  @ApiOperation({
+    summary: 'Request workspace enrollment',
+    description: 'Creates an enrollment request for a workspace',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Enrollment request created successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - Already enrolled or request exists',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Workspace not found' })
   requestEnrollment(@Body() enrollDto: EnrollWorkspaceDto, @Request() req) {
@@ -260,35 +411,73 @@ export class WorkspacesController {
   }
 
   @Post('requests/:requestId/approve')
-  @ApiOperation({ summary: 'Approve enrollment request', description: 'Approves an enrollment request (workspace owner only)' })
-  @ApiParam({ name: 'requestId', description: 'Enrollment request UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Enrollment request approved successfully' })
+  @ApiOperation({
+    summary: 'Approve enrollment request',
+    description: 'Approves an enrollment request (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'requestId',
+    description: 'Enrollment request UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Enrollment request approved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
   @ApiResponse({ status: 404, description: 'Request not found' })
   approveRequest(@Param('requestId') requestId: string, @Request() req) {
-    return this.workspacesService.approveEnrollmentRequest(requestId, req.user.id);
+    return this.workspacesService.approveEnrollmentRequest(
+      requestId,
+      req.user.id,
+    );
   }
 
   @Post('requests/:requestId/reject')
-  @ApiOperation({ summary: 'Reject enrollment request', description: 'Rejects an enrollment request (workspace owner only)' })
-  @ApiParam({ name: 'requestId', description: 'Enrollment request UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Enrollment request rejected successfully' })
+  @ApiOperation({
+    summary: 'Reject enrollment request',
+    description: 'Rejects an enrollment request (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'requestId',
+    description: 'Enrollment request UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Enrollment request rejected successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
   @ApiResponse({ status: 404, description: 'Request not found' })
   rejectRequest(@Param('requestId') requestId: string, @Request() req) {
-    return this.workspacesService.rejectEnrollmentRequest(requestId, req.user.id).then(() => ({
-      message: 'Enrollment request rejected successfully',
-    }));
+    return this.workspacesService
+      .rejectEnrollmentRequest(requestId, req.user.id)
+      .then(() => ({
+        message: 'Enrollment request rejected successfully',
+      }));
   }
 
   @Delete('enroll/:workspaceId')
-  @ApiOperation({ summary: 'Unenroll from workspace', description: 'Removes the current user from a workspace' })
-  @ApiParam({ name: 'workspaceId', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Successfully unenrolled from workspace' })
+  @ApiOperation({
+    summary: 'Unenroll from workspace',
+    description: 'Removes the current user from a workspace',
+  })
+  @ApiParam({
+    name: 'workspaceId',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully unenrolled from workspace',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Workspace or enrollment not found' })
+  @ApiResponse({
+    status: 404,
+    description: 'Workspace or enrollment not found',
+  })
   unenroll(@Param('workspaceId') workspaceId: string, @Request() req) {
     return this.workspacesService.unenrollFromWorkspace(
       workspaceId,
@@ -297,8 +486,15 @@ export class WorkspacesController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete workspace', description: 'Deletes a workspace (workspace owner only)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Delete workspace',
+    description: 'Deletes a workspace (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Workspace deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -312,8 +508,16 @@ export class WorkspacesController {
   // ============================================================================
 
   @Post(':id/invite')
-  @ApiOperation({ summary: 'Invite user to workspace', description: 'Sends an invitation to a user to join the workspace (workspace owner only)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Invite user to workspace',
+    description:
+      'Sends an invitation to a user to join the workspace (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 201, description: 'Invitation sent successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -331,8 +535,16 @@ export class WorkspacesController {
   }
 
   @Get(':id/invitations')
-  @ApiOperation({ summary: 'Get workspace invitations', description: 'Returns all invitations for a workspace (workspace owner only)' })
-  @ApiParam({ name: 'id', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Get workspace invitations',
+    description:
+      'Returns all invitations for a workspace (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'List of workspace invitations' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -347,7 +559,10 @@ export class WorkspacesController {
   }
 
   @Get('invitations/my-invitations')
-  @ApiOperation({ summary: 'Get my invitations', description: 'Returns all invitations received by the current user' })
+  @ApiOperation({
+    summary: 'Get my invitations',
+    description: 'Returns all invitations received by the current user',
+  })
   @ApiResponse({ status: 200, description: 'List of user invitations' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMyInvitations(@Request() req) {
@@ -355,8 +570,15 @@ export class WorkspacesController {
   }
 
   @Post('invitations/:invitationId/accept')
-  @ApiOperation({ summary: 'Accept invitation', description: 'Accepts a workspace invitation' })
-  @ApiParam({ name: 'invitationId', description: 'Invitation UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Accept invitation',
+    description: 'Accepts a workspace invitation',
+  })
+  @ApiParam({
+    name: 'invitationId',
+    description: 'Invitation UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Invitation accepted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Invitation not found' })
@@ -373,8 +595,15 @@ export class WorkspacesController {
   }
 
   @Post('invitations/:invitationId/reject')
-  @ApiOperation({ summary: 'Reject invitation', description: 'Rejects a workspace invitation' })
-  @ApiParam({ name: 'invitationId', description: 'Invitation UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Reject invitation',
+    description: 'Rejects a workspace invitation',
+  })
+  @ApiParam({
+    name: 'invitationId',
+    description: 'Invitation UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Invitation rejected successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Invitation not found' })
@@ -391,9 +620,19 @@ export class WorkspacesController {
   }
 
   @Delete('invitations/:invitationId')
-  @ApiOperation({ summary: 'Cancel invitation', description: 'Cancels a workspace invitation (workspace owner only)' })
-  @ApiParam({ name: 'invitationId', description: 'Invitation UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Invitation cancelled successfully' })
+  @ApiOperation({
+    summary: 'Cancel invitation',
+    description: 'Cancels a workspace invitation (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'invitationId',
+    description: 'Invitation UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Invitation cancelled successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
   @ApiResponse({ status: 404, description: 'Invitation not found' })
@@ -410,7 +649,11 @@ export class WorkspacesController {
   // ============================================================================
 
   @Post('rosters/save')
-  @ApiOperation({ summary: 'Save roster', description: 'Saves or updates a roster for a workspace (workspace owner only)' })
+  @ApiOperation({
+    summary: 'Save roster',
+    description:
+      'Saves or updates a roster for a workspace (workspace owner only)',
+  })
   @ApiResponse({ status: 201, description: 'Roster saved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -419,8 +662,16 @@ export class WorkspacesController {
   }
 
   @Post('rosters/:rosterId/publish')
-  @ApiOperation({ summary: 'Publish roster', description: 'Publishes a roster making it visible to enrolled users (workspace owner only)' })
-  @ApiParam({ name: 'rosterId', description: 'Roster UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Publish roster',
+    description:
+      'Publishes a roster making it visible to enrolled users (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'rosterId',
+    description: 'Roster UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Roster published successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -430,8 +681,16 @@ export class WorkspacesController {
   }
 
   @Post('rosters/:rosterId/unpublish')
-  @ApiOperation({ summary: 'Unpublish roster', description: 'Unpublishes a roster making it hidden from enrolled users (workspace owner only)' })
-  @ApiParam({ name: 'rosterId', description: 'Roster UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Unpublish roster',
+    description:
+      'Unpublishes a roster making it hidden from enrolled users (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'rosterId',
+    description: 'Roster UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Roster unpublished successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -442,7 +701,11 @@ export class WorkspacesController {
 
   // IMPORTANT: More specific routes must come BEFORE generic routes!
   @Get('rosters/my-rosters/:month/:year')
-  @ApiOperation({ summary: 'Get my published rosters', description: 'Returns all published rosters for workspaces the user is enrolled in, filtered by month and year' })
+  @ApiOperation({
+    summary: 'Get my published rosters',
+    description:
+      'Returns all published rosters for workspaces the user is enrolled in, filtered by month and year',
+  })
   @ApiParam({ name: 'month', description: 'Month number (1-12)', example: '1' })
   @ApiParam({ name: 'year', description: 'Year (2000-2100)', example: '2024' })
   @ApiResponse({ status: 200, description: 'List of published rosters' })
@@ -460,13 +723,24 @@ export class WorkspacesController {
   }
 
   @Get('rosters/:workspaceId/:month/:year')
-  @ApiOperation({ summary: 'Get roster', description: 'Returns a roster for a specific workspace, month, and year (must be enrolled or owner)' })
-  @ApiParam({ name: 'workspaceId', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Get roster',
+    description:
+      'Returns a roster for a specific workspace, month, and year (must be enrolled or owner)',
+  })
+  @ApiParam({
+    name: 'workspaceId',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiParam({ name: 'month', description: 'Month number (1-12)', example: '1' })
   @ApiParam({ name: 'year', description: 'Year (2000-2100)', example: '2024' })
   @ApiResponse({ status: 200, description: 'Roster details' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Not enrolled or owner' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Not enrolled or owner',
+  })
   @ApiResponse({ status: 404, description: 'Roster not found' })
   async getRoster(
     @Param('workspaceId') workspaceId: string,
@@ -483,8 +757,15 @@ export class WorkspacesController {
   }
 
   @Delete('rosters/:rosterId')
-  @ApiOperation({ summary: 'Delete roster', description: 'Deletes a roster (workspace owner only)' })
-  @ApiParam({ name: 'rosterId', description: 'Roster UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Delete roster',
+    description: 'Deletes a roster (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'rosterId',
+    description: 'Roster UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'Roster deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -499,9 +780,18 @@ export class WorkspacesController {
   // ============================================================================
 
   @Post('leave-requests')
-  @ApiOperation({ summary: 'Create leave request', description: 'Creates a new leave request for a workspace' })
-  @ApiResponse({ status: 201, description: 'Leave request created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request - Invalid dates or overlapping requests' })
+  @ApiOperation({
+    summary: 'Create leave request',
+    description: 'Creates a new leave request for a workspace',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Leave request created successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - Invalid dates or overlapping requests',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Workspace not found' })
   async requestLeave(
@@ -515,7 +805,10 @@ export class WorkspacesController {
   }
 
   @Get('leave-requests/my-requests')
-  @ApiOperation({ summary: 'Get my leave requests', description: 'Returns all leave requests created by the current user' })
+  @ApiOperation({
+    summary: 'Get my leave requests',
+    description: 'Returns all leave requests created by the current user',
+  })
   @ApiResponse({ status: 200, description: 'List of user leave requests' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMyLeaveRequests(@Request() req) {
@@ -523,8 +816,16 @@ export class WorkspacesController {
   }
 
   @Get(':workspaceId/leave-requests')
-  @ApiOperation({ summary: 'Get workspace leave requests', description: 'Returns all leave requests for a workspace (workspace owner only)' })
-  @ApiParam({ name: 'workspaceId', description: 'Workspace UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiOperation({
+    summary: 'Get workspace leave requests',
+    description:
+      'Returns all leave requests for a workspace (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'workspaceId',
+    description: 'Workspace UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @ApiResponse({ status: 200, description: 'List of workspace leave requests' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
@@ -539,9 +840,19 @@ export class WorkspacesController {
   }
 
   @Post('leave-requests/:requestId/approve')
-  @ApiOperation({ summary: 'Approve leave request', description: 'Approves a leave request (workspace owner only)' })
-  @ApiParam({ name: 'requestId', description: 'Leave request UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Leave request approved successfully' })
+  @ApiOperation({
+    summary: 'Approve leave request',
+    description: 'Approves a leave request (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'requestId',
+    description: 'Leave request UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Leave request approved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
   @ApiResponse({ status: 404, description: 'Leave request not found' })
@@ -554,9 +865,19 @@ export class WorkspacesController {
   }
 
   @Post('leave-requests/:requestId/reject')
-  @ApiOperation({ summary: 'Reject leave request', description: 'Rejects a leave request (workspace owner only)' })
-  @ApiParam({ name: 'requestId', description: 'Leave request UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Leave request rejected successfully' })
+  @ApiOperation({
+    summary: 'Reject leave request',
+    description: 'Rejects a leave request (workspace owner only)',
+  })
+  @ApiParam({
+    name: 'requestId',
+    description: 'Leave request UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Leave request rejected successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not workspace owner' })
   @ApiResponse({ status: 404, description: 'Leave request not found' })
@@ -569,9 +890,19 @@ export class WorkspacesController {
   }
 
   @Delete('leave-requests/:requestId')
-  @ApiOperation({ summary: 'Cancel leave request', description: 'Cancels a leave request (request creator only)' })
-  @ApiParam({ name: 'requestId', description: 'Leave request UUID', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @ApiResponse({ status: 200, description: 'Leave request cancelled successfully' })
+  @ApiOperation({
+    summary: 'Cancel leave request',
+    description: 'Cancels a leave request (request creator only)',
+  })
+  @ApiParam({
+    name: 'requestId',
+    description: 'Leave request UUID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Leave request cancelled successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Not request creator' })
   @ApiResponse({ status: 404, description: 'Leave request not found' })
@@ -583,4 +914,3 @@ export class WorkspacesController {
     return { message: 'Leave request cancelled successfully' };
   }
 }
-

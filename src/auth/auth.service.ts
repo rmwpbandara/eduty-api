@@ -11,7 +11,9 @@ export class AuthService implements OnModuleInit {
 
   onModuleInit() {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseKey = this.configService.get<string>(
+      'SUPABASE_SERVICE_ROLE_KEY',
+    );
 
     if (!supabaseUrl || !supabaseKey) {
       this.logger.warn(
@@ -37,12 +39,18 @@ export class AuthService implements OnModuleInit {
 
     try {
       // Add timeout protection
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Token verification timeout')), 10000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Token verification timeout')),
+          10000,
+        ),
       );
 
       const getUserPromise = this.supabase.auth.getUser(token);
-      const { data, error } = await Promise.race([getUserPromise, timeoutPromise]) as any;
+      const { data, error } = (await Promise.race([
+        getUserPromise,
+        timeoutPromise,
+      ])) as any;
 
       if (error) {
         this.logger.warn('Token verification failed', { error: error.message });
@@ -56,7 +64,9 @@ export class AuthService implements OnModuleInit {
 
       // Validate user data
       if (!data.user.id || !data.user.email) {
-        this.logger.warn('Invalid user data returned', { userId: data.user.id });
+        this.logger.warn('Invalid user data returned', {
+          userId: data.user.id,
+        });
         return null;
       }
 
@@ -84,15 +94,21 @@ export class AuthService implements OnModuleInit {
 
     try {
       // Add timeout protection
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Get user timeout')), 10000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Get user timeout')), 10000),
       );
 
       const getUserPromise = this.supabase.auth.admin.getUserById(userId);
-      const { data, error } = await Promise.race([getUserPromise, timeoutPromise]) as any;
+      const { data, error } = (await Promise.race([
+        getUserPromise,
+        timeoutPromise,
+      ])) as any;
 
       if (error) {
-        this.logger.warn('Failed to get user by ID', { userId, error: error.message });
+        this.logger.warn('Failed to get user by ID', {
+          userId,
+          error: error.message,
+        });
         return null;
       }
 
@@ -103,7 +119,9 @@ export class AuthService implements OnModuleInit {
 
       // Validate user data
       if (!data.user.id || !data.user.email) {
-        this.logger.warn('Invalid user data returned', { userId: data.user.id });
+        this.logger.warn('Invalid user data returned', {
+          userId: data.user.id,
+        });
         return null;
       }
 
@@ -131,12 +149,15 @@ export class AuthService implements OnModuleInit {
 
     try {
       // Add timeout protection
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Get user timeout')), 10000)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Get user timeout')), 10000),
       );
 
       const listUsersPromise = this.supabase.auth.admin.listUsers();
-      const { data, error } = await Promise.race([listUsersPromise, timeoutPromise]) as any;
+      const { data, error } = (await Promise.race([
+        listUsersPromise,
+        timeoutPromise,
+      ])) as any;
 
       if (error) {
         this.logger.warn('Failed to list users', { error: error.message });
@@ -150,10 +171,14 @@ export class AuthService implements OnModuleInit {
 
       // Find user by email
       const normalizedEmail = email.toLowerCase().trim();
-      const user = data.users.find((u: any) => u.email?.toLowerCase() === normalizedEmail);
+      const user = data.users.find(
+        (u: any) => u.email?.toLowerCase() === normalizedEmail,
+      );
 
       if (!user) {
-        this.logger.debug('User not found by email', { email: normalizedEmail });
+        this.logger.debug('User not found by email', {
+          email: normalizedEmail,
+        });
         return null;
       }
 
@@ -170,7 +195,9 @@ export class AuthService implements OnModuleInit {
 
   async getUserPhoneNumber(userId: string): Promise<string | null> {
     if (!this.supabase) {
-      this.logger.warn('Supabase client not initialized. Cannot get phone number.');
+      this.logger.warn(
+        'Supabase client not initialized. Cannot get phone number.',
+      );
       return null;
     }
 
@@ -181,7 +208,7 @@ export class AuthService implements OnModuleInit {
       }
 
       // Check all possible phone number fields
-      const phoneNumber = 
+      const phoneNumber =
         user.user_metadata?.phone ||
         user.user_metadata?.phone_number ||
         user.user_metadata?.phoneNumber ||
@@ -195,4 +222,3 @@ export class AuthService implements OnModuleInit {
     }
   }
 }
-

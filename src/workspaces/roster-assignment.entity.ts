@@ -47,4 +47,3 @@ export class RosterAssignment {
   @JoinColumn({ name: 'roster_id' })
   roster: Roster;
 }
-

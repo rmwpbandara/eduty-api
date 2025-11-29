@@ -23,4 +23,3 @@ export class Workspace {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 }
-

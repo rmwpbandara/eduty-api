@@ -31,4 +31,3 @@ export class Enrollment {
   @JoinColumn({ name: 'workspace_id' })
   workspace: Workspace;
 }
-

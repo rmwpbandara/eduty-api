@@ -38,29 +38,45 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       useFactory: () => {
         const databaseUrl = process.env.DATABASE_URL;
         if (!databaseUrl) {
+          console.error('DATABASE_URL environment variable is not set');
           throw new Error('DATABASE_URL environment variable is not set');
         }
 
-        // Parse DATABASE_URL (format: postgresql://user:password@host:port/database)
-        // Handle both postgresql:// and postgres:// protocols
-        const urlString = databaseUrl.replace(/^postgresql:/, 'postgres:');
-        const url = new URL(urlString);
-        return {
-          type: 'postgres',
-          host: url.hostname,
-          port: parseInt(url.port) || 5432,
-          username: url.username,
-          password: url.password,
-          database: url.pathname.slice(1), // Remove leading '/'
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: process.env.NODE_ENV !== 'production', // Auto-sync in dev only
-          ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-          logging: process.env.NODE_ENV === 'development',
-          maxQueryExecutionTime: 1000, // Log slow queries
-          migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-          migrationsRun: false,
-          migrationsTableName: 'migrations',
-        };
+        try {
+          // Parse DATABASE_URL (format: postgresql://user:password@host:port/database)
+          // Handle both postgresql:// and postgres:// protocols
+          const urlString = databaseUrl.replace(/^postgresql:/, 'postgres:');
+          const url = new URL(urlString);
+          
+          const config = {
+            type: 'postgres' as const,
+            host: url.hostname,
+            port: parseInt(url.port) || 5432,
+            username: url.username,
+            password: url.password,
+            database: url.pathname.slice(1), // Remove leading '/'
+            entities: [__dirname + '/**/*.entity{.ts,.js}'],
+            synchronize: process.env.NODE_ENV !== 'production', // Auto-sync in dev only
+            ssl:
+              process.env.NODE_ENV === 'production'
+                ? { rejectUnauthorized: false }
+                : false,
+            logging: process.env.NODE_ENV === 'development',
+            maxQueryExecutionTime: 1000, // Log slow queries
+            migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+            migrationsRun: false,
+            migrationsTableName: 'migrations',
+            retryAttempts: 3,
+            retryDelay: 3000,
+            autoLoadEntities: true,
+          };
+          
+          console.log(`Database configured for: ${url.hostname}:${config.port}/${config.database}`);
+          return config;
+        } catch (error) {
+          console.error('Failed to parse DATABASE_URL:', error);
+          throw new Error(`Invalid DATABASE_URL format: ${error.message}`);
+        }
       },
     }),
     // Feature Modules
@@ -94,4 +110,3 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
   ],
 })
 export class AppModule {}
-

@@ -1,4 +1,14 @@
-import { IsUUID, IsInt, Min, Max, IsArray, ValidateNested, IsString, IsBoolean, IsIn } from 'class-validator';
+import {
+  IsUUID,
+  IsInt,
+  Min,
+  Max,
+  IsArray,
+  ValidateNested,
+  IsString,
+  IsBoolean,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -32,7 +42,8 @@ class RosterAssignmentDto {
   shiftPeriod: 'M' | 'E' | 'N';
 
   @ApiProperty({
-    description: 'Duty type: M (Morning), E (Evening), N (Night), DO (Day Off), SD (Sick Day), VL (Vacation Leave), or empty string',
+    description:
+      'Duty type: M (Morning), E (Evening), N (Night), DO (Day Off), SD (Sick Day), VL (Vacation Leave), or empty string',
     example: 'M',
     enum: ['M', 'E', 'N', 'DO', 'SD', 'VL', ''],
   })
@@ -88,4 +99,3 @@ export class SaveRosterDto {
   @Type(() => RosterAssignmentDto)
   assignments: RosterAssignmentDto[];
 }
-

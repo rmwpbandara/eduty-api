@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SearchWorkspaceDto {
@@ -10,4 +10,3 @@ export class SearchWorkspaceDto {
   @IsNotEmpty()
   query: string; // Can be workspace name or ID
 }
-

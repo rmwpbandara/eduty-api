@@ -46,4 +46,3 @@ export class Invitation {
   @JoinColumn({ name: 'workspace_id' })
   workspace: Workspace;
 }
-

@@ -14,4 +14,3 @@ export class UpdateWorkspaceDto {
   @IsOptional()
   name?: string;
 }
-

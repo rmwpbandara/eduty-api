@@ -10,4 +10,3 @@ export class InviteUserDto {
   @IsEmail()
   email: string;
 }
-

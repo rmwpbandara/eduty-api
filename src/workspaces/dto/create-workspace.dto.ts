@@ -12,4 +12,3 @@ export class CreateWorkspaceDto {
   @MaxLength(255)
   name: string;
 }
-

@@ -25,7 +25,9 @@ export class AuthGuard implements CanActivate {
 
       if (!authHeader.startsWith('Bearer ')) {
         this.logger.warn('Invalid authorization header format');
-        throw new UnauthorizedException('Invalid authorization header format. Expected: Bearer <token>');
+        throw new UnauthorizedException(
+          'Invalid authorization header format. Expected: Bearer <token>',
+        );
       }
 
       const token = authHeader.replace('Bearer ', '').trim();
@@ -36,7 +38,7 @@ export class AuthGuard implements CanActivate {
       }
 
       const user = await this.authService.verifyToken(token);
-      
+
       if (!user) {
         this.logger.warn('Token verification failed');
         throw new UnauthorizedException('Invalid or expired token');
@@ -61,4 +63,3 @@ export class AuthGuard implements CanActivate {
     }
   }
 }
-

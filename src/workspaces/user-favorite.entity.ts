@@ -30,4 +30,3 @@ export class UserFavorite {
   @JoinColumn({ name: 'workspace_id' })
   workspace: Workspace;
 }
-

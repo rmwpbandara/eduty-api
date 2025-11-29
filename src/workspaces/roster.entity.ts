@@ -53,4 +53,3 @@ export class Roster {
   @JoinColumn({ name: 'workspace_id' })
   workspace: Workspace;
 }
-
