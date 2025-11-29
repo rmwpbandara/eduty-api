@@ -14,6 +14,7 @@ import { loggerConfig } from './config/logger.config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { isProductionLike, isDevelopment } from './common/utils/env.util';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute
-        limit: process.env.NODE_ENV === 'production' ? 100 : 1000, // 100 requests per minute in production
+        limit: isProductionLike() ? 100 : 1000, // 100 requests per minute in production/staging
       },
     ]),
     // Database
@@ -56,12 +57,11 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
             password: url.password,
             database: url.pathname.slice(1), // Remove leading '/'
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: process.env.NODE_ENV !== 'production', // Auto-sync in dev only
-            ssl:
-              process.env.NODE_ENV === 'production'
-                ? { rejectUnauthorized: false }
-                : false,
-            logging: process.env.NODE_ENV === 'development',
+            synchronize: !isProductionLike(), // Auto-sync in dev only
+            ssl: isProductionLike()
+              ? { rejectUnauthorized: false }
+              : false,
+            logging: isDevelopment(),
             maxQueryExecutionTime: 1000, // Log slow queries
             migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
             migrationsRun: false,

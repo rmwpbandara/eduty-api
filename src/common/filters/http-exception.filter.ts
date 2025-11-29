@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { isProductionLike } from '../utils/env.util';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -63,10 +64,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       ...(errors && { errors }),
     };
 
-    // In production, don't expose internal error details
+    // In production/staging, don't expose internal error details
     if (
       status === HttpStatus.INTERNAL_SERVER_ERROR &&
-      process.env.NODE_ENV === 'production'
+      isProductionLike()
     ) {
       errorResponse.message = 'Internal server error';
     }

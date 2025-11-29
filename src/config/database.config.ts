@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
+import { isProductionLike, isDevelopment } from '../common/utils/env.util';
 
 config();
 
@@ -21,9 +22,8 @@ export default new DataSource({
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../migrations/**/*{.ts,.js}'],
   synchronize: false,
-  logging: process.env.NODE_ENV === 'development',
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  logging: isDevelopment(),
+  ssl: isProductionLike()
+    ? { rejectUnauthorized: false }
+    : false,
 });

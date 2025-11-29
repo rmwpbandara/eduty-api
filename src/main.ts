@@ -5,6 +5,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import { AppModule } from './app.module';
+import { isProductionLike, isDevelopment, isProduction } from './common/utils/env.util';
 
 async function bootstrap() {
   // Log startup attempt
@@ -33,7 +34,7 @@ async function bootstrap() {
     // Security Headers
     app.use(
       helmet({
-        contentSecurityPolicy: process.env.NODE_ENV === 'production',
+        contentSecurityPolicy: isProductionLike(),
         crossOriginEmbedderPolicy: false,
       }),
     );
@@ -69,7 +70,7 @@ async function bootstrap() {
         }
 
         // In development, allow all origins
-        if (process.env.NODE_ENV !== 'production') {
+        if (!isProductionLike()) {
           callback(null, true);
           return;
         }
@@ -96,7 +97,7 @@ async function bootstrap() {
         transformOptions: {
           enableImplicitConversion: true,
         },
-        disableErrorMessages: process.env.NODE_ENV === 'production',
+        disableErrorMessages: isProductionLike(),
         validationError: {
           target: false,
           value: false,
@@ -104,8 +105,8 @@ async function bootstrap() {
       }),
     );
 
-    // Swagger configuration (only in non-production)
-    if (process.env.NODE_ENV !== 'production') {
+    // Swagger configuration (available in development and staging, not production)
+    if (!isProduction()) {
       const config = new DocumentBuilder()
         .setTitle('EDuty API')
         .setDescription('EDuty Backend API Documentation - Production Ready')
@@ -159,7 +160,7 @@ async function bootstrap() {
     logger.log(startupMessage);
     console.log(startupMessage); // Always log to console for Railway
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (!isProduction()) {
       logger.log(`📚 Swagger documentation: http://0.0.0.0:${port}/api/v1/docs`);
       console.log(`📚 Swagger documentation: http://0.0.0.0:${port}/api/v1/docs`);
     }

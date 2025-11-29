@@ -3,8 +3,9 @@ import * as winston from 'winston';
 import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isProductionLike } from '../common/utils/env.util';
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = isProductionLike();
 const isRailway = !!process.env.RAILWAY_ENVIRONMENT;
 
 // Create logs directory if it doesn't exist (only if not on Railway)
