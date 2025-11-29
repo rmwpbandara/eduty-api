@@ -8,18 +8,13 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get hello message' })
-  @ApiResponse({ status: 200, description: 'Returns hello message' })
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
-  @Get('health')
-  @ApiOperation({ summary: 'Health check endpoint' })
-  @ApiResponse({ status: 200, description: 'Returns health status' })
-  getHealth() {
+  @ApiOperation({ summary: 'Get API information' })
+  @ApiResponse({ status: 200, description: 'Returns API information' })
+  getHello() {
     return {
-      status: 'ok',
+      message: this.appService.getHello(),
+      version: '1.0',
+      environment: process.env.NODE_ENV || 'development',
       timestamp: new Date().toISOString(),
     };
   }

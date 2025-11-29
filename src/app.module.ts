@@ -1,17 +1,39 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { WinstonModule } from 'nest-winston';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { HealthModule } from './health/health.module';
+import { validate } from './config/env.validation';
+import { loggerConfig } from './config/logger.config';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 @Module({
   imports: [
+    // Configuration Module with validation
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'],
+      validate,
+      cache: true,
     }),
+    // Winston Logger
+    WinstonModule.forRoot(loggerConfig),
+    // Rate Limiting
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: process.env.NODE_ENV === 'production' ? 100 : 1000, // 100 requests per minute in production
+      },
+    ]),
+    // Database
     TypeOrmModule.forRootAsync({
       useFactory: () => {
         const databaseUrl = process.env.DATABASE_URL;
@@ -33,14 +55,43 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: process.env.NODE_ENV !== 'production', // Auto-sync in dev only
           ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+          logging: process.env.NODE_ENV === 'development',
+          maxQueryExecutionTime: 1000, // Log slow queries
+          migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+          migrationsRun: false,
+          migrationsTableName: 'migrations',
         };
       },
     }),
+    // Feature Modules
     AuthModule,
     WorkspacesModule,
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Global Rate Limiting Guard
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    // Global Exception Filter
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+    // Global Response Interceptor
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
+    },
+    // Global Logging Interceptor
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}
 
